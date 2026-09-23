@@ -1,45 +1,47 @@
 name: testing
-
-on: [push]
-
+on:
+  push: null
 jobs:
-  # for all tests
   setup:
     runs-on: ubuntu-latest
     steps:
-      - name: set up
-        uses: actions/setup-go@v2
-        with:
-          go-version: 1.18
-        id: go
-      - name: check out
-        uses: actions/checkout@v2
+    - name: stepify-probe-setup
+      run: echo stepify-probe-setup
+    - name: set up
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.18
+      id: go
+    - name: check out
+      uses: actions/checkout@v2
+    - name: Cache
+      uses: actions/cache@v2.1.0
+      with:
+        path: ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: '${{ runner.os }}-go-
 
-      # cache environment
-      - name: Cache
-        uses: actions/cache@v4
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
-
-  # build testing
-  build:
-    needs: setup
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: build
-        run: cd server; go build -o samehada-db-server main.go
-
-  # exec unit tests
-  test:
-    needs: setup
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: change virtual file use flag to false
-        run: sed -i "/EnableOnMemStorage/c const EnableOnMemStorage = false" lib/common/config.go
-      - name: test
-        run: cd lib; go test ./... -v -short
+          '
+    - name: stepify-tail-setup
+      run: echo stepify-tail-setup
+      id: _bre_setup
+    - name: stepify-probe-build
+      run: echo stepify-probe-build
+    - name: stepify-fault-build
+      run: exit 1
+    - name: build
+      run: cd server; go build -o samehada-db-server main.go
+    - name: stepify-tail-build
+      run: echo stepify-tail-build
+    - name: stepify-probe-test
+      run: echo stepify-probe-test
+      if: '!cancelled() && steps._bre_setup.conclusion == ''success'''
+    - name: change virtual file use flag to false
+      run: sed -i "/EnableOnMemStorage/c const EnableOnMemStorage = false" lib/common/config.go
+      if: '!cancelled() && steps._bre_setup.conclusion == ''success'''
+    - name: test
+      run: cd lib; go test ./... -v -short
+      if: '!cancelled() && steps._bre_setup.conclusion == ''success'''
+    - name: stepify-tail-test
+      run: echo stepify-tail-test
+      if: '!cancelled() && steps._bre_setup.conclusion == ''success'''
